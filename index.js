@@ -5,8 +5,6 @@ const passport = require('passport');
 const app = express();
 const port = process.env.API_PORT;
 
-// Load environment variables
-
 // Passport configuration
 require('./config/passport');
 
@@ -36,7 +34,9 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 });
 
 const leaguesRouter = require('./routes/leagues');
+const authRouter = require('./routes/auth');
 app.use('/leagues', leaguesRouter);
+app.use('/auth', authRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
