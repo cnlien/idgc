@@ -1,8 +1,6 @@
 const express = require('express');
-const sqlite3 = require('sqlite3');
 const router = express.Router();
-
-const db = new sqlite3.Database('../idgc.db');
+const db = require('../config/database');
 
 const leagueDetailsQuery = `
     SELECT 

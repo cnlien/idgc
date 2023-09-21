@@ -1,7 +1,7 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('../idgc.db');
+const db = require('../config/database');
 
 passport.serializeUser((user, done) => {
     done(null, user.ID);
@@ -22,7 +22,14 @@ passport.use(new GoogleStrategy({
         if (err) return done(err);
 
         if (user) {
-            return done(null, user);
+            // Insert a new session record for the existing user
+            db.run("INSERT INTO UserSessions (UserID) VALUES (?)", [user.ID], (err) => {
+                if (err) {
+                    console.error(err.message);
+                    // Handle error, maybe return an error response or log it
+                }
+                return done(null, user);
+            });
         } else {
             const newUser = {
                 GoogleID: profile.id,
@@ -38,7 +45,15 @@ passport.use(new GoogleStrategy({
                 function(err) {
                     if (err) return done(err);
                     newUser.ID = this.lastID;
-                    return done(null, newUser);
+
+                    // Insert a new session record for the new user
+                    db.run("INSERT INTO UserSessions (UserID) VALUES (?)", [newUser.ID], (err) => {
+                        if (err) {
+                            console.error(err.message);
+                            // Handle error, maybe return an error response or log it
+                        }
+                        return done(null, newUser);
+                    });
                 }
             );
         }
