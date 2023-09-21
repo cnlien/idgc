@@ -1,13 +1,41 @@
-const express = require('express');
 require('dotenv').config();
+const express = require('express');
+const session = require('express-session');
+const passport = require('passport');
 const app = express();
-const port = 3000;
+const port = process.env.API_PORT;
+
+// Load environment variables
+
+// Passport configuration
+require('./config/passport');
+
+// Express session setup
+app.use(session({ 
+    secret: require('./config/generateSecret')(), // Use the generateSecret function
+    resave: false, 
+    saveUninitialized: true 
+}));
+
+// Passport initialization
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.use(express.json());
 
 // Import and use the routers
-const leaguesRouter = require('./routes/leagues');
 
+// Google authentication route
+app.get('/auth/google', passport.authenticate('google', {
+  scope: ['profile', 'email']
+}));
+
+// Callback route after Google authentication
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
+  res.redirect('/'); // Redirect to the homepage or dashboard after successful login
+});
+
+const leaguesRouter = require('./routes/leagues');
 app.use('/leagues', leaguesRouter);
 
 app.listen(port, () => {
