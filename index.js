@@ -38,6 +38,24 @@ const authRouter = require('./routes/auth');
 app.use('/leagues', leaguesRouter);
 app.use('/auth', authRouter);
 
+app.get('/', (req, res) => {
+  if (req.isAuthenticated()) {
+      // If the user is authenticated, render a logout button
+      res.send(`
+          <h1>Welcome, ${req.user.DisplayName}!</h1>
+          <form action="/auth/logout" method="post">
+              <button type="submit">Logout</button>
+          </form>
+      `);
+  } else {
+      // If the user is not authenticated, just display 'connected'
+      res.send('connected');
+  }
+});
+
+
+
+
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
