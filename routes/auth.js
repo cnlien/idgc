@@ -23,11 +23,10 @@ router.post('/logout', (req, res) => {
           console.error("Error destroying session:", err.message);
           return res.status(500).send("An error occurred while logging out. Please try again later.");
         }
-        res.send("Successfully logged out.");
+        res.status(200).send("Successfully logged out.");
       });
     });
   });
 });
-
 
 module.exports = router;

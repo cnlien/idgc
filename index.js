@@ -35,8 +35,13 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 
 const leaguesRouter = require('./routes/leagues');
 const authRouter = require('./routes/auth');
+const infoRouter = require('./routes/info');
+const hallOfFameRouter = require('./routes/hof');
+
 app.use('/leagues', leaguesRouter);
 app.use('/auth', authRouter);
+app.use('/info', infoRouter);
+app.use('/hallOfFame', hallOfFameRouter);
 
 app.get('/', (req, res) => {
   if (req.isAuthenticated()) {

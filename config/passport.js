@@ -1,7 +1,9 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const sqlite3 = require('sqlite3').verbose();
+const jwt = require('jsonwebtoken');
 const db = require('../config/database');
+
+const SECRET = process.env.JWT_SECRET;
 
 passport.serializeUser((user, done) => {
     done(null, user.ID);
@@ -18,16 +20,36 @@ passport.use(new GoogleStrategy({
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackURL: `${process.env.API_BASE_URL}/auth/google/callback`
 }, (token, tokenSecret, profile, done) => {
-    db.get("SELECT * FROM Users WHERE GoogleID = ?", [profile.id], (err, user) => {
+    db.get("SELECT * FROM Users WHERE GoogleID = ?", [profile.id], async (err, user) => {
         if (err) return done(err);
 
+        const generateJWT = async (userID) => {
+            // Fetch user roles
+            const roles = await new Promise((resolve, reject) => {
+                db.all("SELECT RoleName FROM UserRoles JOIN Roles ON UserRoles.RoleID = Roles.RoleID WHERE UserID = ?", [userID], (err, rows) => {
+                    if (err) reject(err);
+                    resolve(rows.map(row => row.RoleName));
+                });
+            });
+
+            // Fetch leagues the user is an admin for
+            const leaguesAdmin = await new Promise((resolve, reject) => {
+                db.all("SELECT LeagueID FROM LeagueAdmins WHERE UserID = ?", [userID], (err, rows) => {
+                    if (err) reject(err);
+                    resolve(rows.map(row => row.LeagueID));
+                });
+            });
+
+            // Generate JWT with roles and leagues
+            return jwt.sign({ id: userID, roles, leaguesAdmin }, SECRET, { expiresIn: '7d' });
+        };
+
         if (user) {
-            // Insert a new session record for the existing user
-            db.run("INSERT INTO UserSessions (UserID) VALUES (?)", [user.ID], (err) => {
-                if (err) {
-                    console.error(err.message);
-                    // Handle error, maybe return an error response or log it
-                }
+            const userToken = await generateJWT(user.ID);
+
+            // Insert a new session record for the existing user with the JWT
+            db.run("INSERT INTO UserSessions (UserID, Token) VALUES (?, ?)", [user.ID, userToken], (err) => {
+                if (err) console.error(err.message);
                 return done(null, user);
             });
         } else {
@@ -42,16 +64,15 @@ passport.use(new GoogleStrategy({
 
             db.run("INSERT INTO Users (GoogleID, DisplayName, FirstName, LastName, Email, ProfilePhotoURL) VALUES (?, ?, ?, ?, ?, ?)", 
                 [newUser.GoogleID, newUser.DisplayName, newUser.FirstName, newUser.LastName, newUser.Email, newUser.ProfilePhotoURL], 
-                function(err) {
+                async function(err) {
                     if (err) return done(err);
                     newUser.ID = this.lastID;
 
-                    // Insert a new session record for the new user
-                    db.run("INSERT INTO UserSessions (UserID) VALUES (?)", [newUser.ID], (err) => {
-                        if (err) {
-                            console.error(err.message);
-                            // Handle error, maybe return an error response or log it
-                        }
+                    const userToken = await generateJWT(newUser.ID);
+
+                    // Insert a new session record for the new user with the JWT
+                    db.run("INSERT INTO UserSessions (UserID, Token) VALUES (?, ?)", [newUser.ID, userToken], (err) => {
+                        if (err) console.error(err.message);
                         return done(null, newUser);
                     });
                 }
