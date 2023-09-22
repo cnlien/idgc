@@ -1,4 +1,5 @@
 require('dotenv').config();
+const db = require('./config/database');  // Import the database connection
 const express = require('express');
 const session = require('express-session');
 const passport = require('passport');
@@ -33,30 +34,11 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
   res.redirect('/'); // Redirect to the homepage or dashboard after successful login
 });
 
-const leaguesRouter = require('./routes/leagues');
-const authRouter = require('./routes/auth');
-const infoRouter = require('./routes/info');
-const hallOfFameRouter = require('./routes/hof');
-
-app.use('/leagues', leaguesRouter);
-app.use('/auth', authRouter);
-app.use('/info', infoRouter);
-app.use('/hallOfFame', hallOfFameRouter);
 
 app.get('/', (req, res) => {
-  if (req.isAuthenticated()) {
-      // If the user is authenticated, render a logout button
-      res.send(`
-          <h1>Welcome, ${req.user.DisplayName}!</h1>
-          <form action="/auth/logout" method="post">
-              <button type="submit">Logout</button>
-          </form>
-      `);
-  } else {
-      // If the user is not authenticated, just display 'connected'
-      res.send('connected');
-  }
+  res.send('<h1>Indy Disc Golf API</h1><p>Author: Chris Lien</p>');
 });
+
 
 
 
