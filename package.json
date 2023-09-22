@@ -7,9 +7,8 @@
     "start": "node index.js",
     "watch": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prettier": "prettier --write 'src/**/*.{js,jsx,ts,tsx,json}'",
-    "prettier-check": "prettier --check 'src/**/*.{js,jsx,ts,tsx,json}'"
-  },
+    "prettier": "prettier --write '{middleware,routes,config,models}/**/*.js' 'index.js'",
+    "prettier-check": "prettier --check '{middleware,routes,config,models}/**/*.js' 'index.js'"  },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged"
