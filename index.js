@@ -39,10 +39,6 @@ app.get('/', (req, res) => {
   res.send('<h1>Indy Disc Golf API</h1><p>Author: Chris Lien</p>');
 });
 
-
-
-
-
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
 });
